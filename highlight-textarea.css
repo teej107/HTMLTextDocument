@@ -1,0 +1,32 @@
+/*Stylesheet equivalent*/
+
+.highlight-textarea
+{
+    position: absolute;
+    box-sizing: border-box;
+    padding: 5px;
+    margin: 0;
+    font: 16px/20px 'Arial', 'sans-serif';
+    letter-spacing: 1px;
+    overflow: auto;
+}
+
+textarea.highlight-textarea
+{
+    display: block;
+    z-index: 2;
+    background-color: transparent;
+}
+
+div.highlight-textarea
+{
+    z-index: 1;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: transparent;
+}
+
+div.highlight-textarea mark {
+    color: transparent;
+    background-color: yellow;
+}
