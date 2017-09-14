@@ -82,14 +82,6 @@ class TextDocument extends HTMLElement {
         //start 1st priority, length 2nd priority
         let highlightsSortFn = (a, b) => (a.start - b.start) || ((b.end - b.start) - (a.end - a.start));
 
-        highlights.forEach = (callback) => {
-            if (needsSort) {
-                highlights.sort(highlightsSortFn);
-                needsSort = false;
-            }
-            Array.prototype.forEach(callback, highlights);
-        };
-
         this.addHighlight = (start, end, color = '#FFFF00') => {
             if (isNaN(start) || isNaN(end))
                 throw "Invalid value. Must be a number";
@@ -126,14 +118,27 @@ class TextDocument extends HTMLElement {
             }
         };
 
+        let createOffsetObject = () => {
+            let map = {};
+            let keyArr = [];
+            return {
+                getOffset: (index) => {
+
+                },
+                add: (start, end) => {
+
+                }
+            };
+        };
         //TODO: fix multi-highlight bugs
         let applyHighlights = () => {
             if (needsSort) {
                 highlights.sort(highlightsSortFn);
                 needsSort = false;
             }
-            let offset = 0;
+            let offset = createOffsetObject();
             let text = textarea.value;
+            console.log(text.length, text);
             for (let highlight of highlights) {
                 if (highlight.start < text.length) {
                     let open = `<mark style="color: transparent; background-color: ${highlight.color}; font: ${textarea.style.font}">`;
