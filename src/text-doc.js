@@ -76,32 +76,29 @@ class TextDocument extends HTMLElement {
         overrideProp(div, 'innerText');
         overrideProp(div, 'innerHTML');
 
-        let needsSort = false;
+        let sortedIndexes = null;
         let highlights = [];
-
-        //start 1st priority, length 2nd priority
-        let highlightsSortFn = (a, b) => (a.start - b.start) || ((b.end - b.start) - (a.end - a.start));
 
         this.addHighlight = (start, end, color = '#FFFF00') => {
             if (isNaN(start) || isNaN(end))
                 throw "Invalid value. Must be a number";
 
-            needsSort = true;
+            sortedIndexes = null;
             highlights.push({start: start, end: end, color: color});
         };
 
         this.getHighlight = (start, end) => {
             const hasStart = !isNaN(start);
             const hasEnd = !isNaN(end);
-            for (var i = 0; i < highlights.length; i++) {
-                var highlight = highlights[i];
+            for (let i = 0; i < highlights.length; i++) {
+                let highlight = highlights[i];
                 if (hasStart && highlight.start !== start)
                     continue;
 
                 if (hasEnd && highlight.end !== end)
                     continue;
 
-                var obj = Object.assign({}, highlight);
+                let obj = Object.assign({}, highlight);
                 obj.index = i;
                 return obj;
             }
@@ -112,43 +109,53 @@ class TextDocument extends HTMLElement {
             if (obj.hasOwnProperty('start') && obj.hasOwnProperty('end')) {
                 let highlight = this.getHighlight(obj.start, obj.end);
                 highlights.splice(highlight.index, 1);
+                sortedIndexes = null;
             }
             else if (obj.hasOwnProperty('index')) {
                 highlights.splice(obj.index, 1);
+                sortedIndexes = null;
             }
         };
 
-        let createOffsetObject = () => {
-            let map = {};
-            let keyArr = [];
-            return {
-                getOffset: (index) => {
+        let sortIndexes = (a, b) => a.index - b.index;
 
-                },
-                add: (start, end) => {
+        let isEndIndex = (index) => index.value.length === 7;
 
-                }
-            };
-        };
-        //TODO: fix multi-highlight bugs
         let applyHighlights = () => {
-            if (needsSort) {
-                highlights.sort(highlightsSortFn);
-                needsSort = false;
+            if (sortedIndexes === null) {
+                sortedIndexes = [];
+                for (let e of highlights) {
+                    let start = {
+                        index: e.start,
+                        value: `<mark style="color: transparent; background-color: ${e.color}; font: ${textarea.style.font}">`
+                    };
+                    let end = {
+                        pair: start,
+                        index: e.end,
+                        value: '</mark>'
+                    };
+                    start.pair = end;
+
+                    sortedIndexes.push(start, end);
+                }
+                sortedIndexes.sort(sortIndexes);
             }
-            let offset = createOffsetObject();
+
+
             let text = textarea.value;
-            console.log(text.length, text);
-            for (let highlight of highlights) {
-                if (highlight.start < text.length) {
-                    let open = `<mark style="color: transparent; background-color: ${highlight.color}; font: ${textarea.style.font}">`;
-                    let close = '</mark>';
-                    text = text.substring(0, highlight.start + offset) +
-                        open +
-                        text.substring(highlight.start + offset, highlight.end) +
-                        close +
-                        text.substring(highlight.end);
-                    offset += open.length;
+            let length = text.length;
+            for (let i = sortedIndexes.length - 1; i >= 0; i--) {
+                let index = sortedIndexes[i];
+                let pair = index.pair;
+                if (isEndIndex(index)) {
+                    if (pair.index < length) {
+                        text = text.substring(0, index.index) + index.value + text.substring(index.index);
+                    }
+                }
+                else {
+                    if (index.index < length) {
+                        text = text.substring(0, index.index) + index.value + text.substring(index.index);
+                    }
                 }
             }
             div.innerHTML = text;
