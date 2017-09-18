@@ -9,9 +9,10 @@
 <text-doc id="textdoc"></text-doc>
 <script src="../src/text-doc.js"></script>
 <script>
-    var textdoc = document.getElementById('textdoc');
+    let textdoc = TextDocument.toTextDocument(document.getElementById('textdoc'));
     textdoc.addHighlight(3, 7);
     textdoc.addHighlight(10, 20, '#00BFFF');
+    document.body.appendChild(document.createElement('some-body'));
 </script>
 </body>
 </html>

@@ -2,8 +2,33 @@ class TextDocument extends HTMLElement {
 
     constructor() {
         super();
+        TextDocument.createElement(this);
+    }
 
-        let shadow = this.attachShadow({mode: 'closed'});
+    static getName() {
+        return 'text-doc';
+    }
+
+    static toTextDocument(element) {
+        if (window.customElements)
+            return element;
+
+        if (element.tagName !== TextDocument.getName().toUpperCase())
+            throw `Element tag name must be ${TextDocument.getName()}. ${element.tagName.toLowerCase()} is not supported.`;
+
+        return TextDocument.createElement(element);
+    }
+
+
+    static createElement(element) {
+        let shadow;
+        if (element instanceof HTMLElement && element.attachShadow) {
+            shadow = element.attachShadow({mode: 'closed'});
+        }
+        else {
+            shadow = document.createElement('div');
+            element.appendChild(shadow);
+        }
 
         let container = document.createElement('div');
         container.style.display = 'block';
@@ -42,10 +67,10 @@ class TextDocument extends HTMLElement {
         setStyle('font', "16px/20px 'Arial', 'sans-serif'");
         setStyle('letterSpacing', '1px');
 
-        for (var key in textarea) {
-            var value = textarea[key];
+        for (let key in textarea) {
+            let value = textarea[key];
             if (value instanceof Function) {
-                this[key] = textarea[key].bind(textarea);
+                element[key] = textarea[key].bind(textarea);
             }
         }
 
@@ -65,10 +90,10 @@ class TextDocument extends HTMLElement {
         container.appendChild(textarea);
         shadow.appendChild(container);
 
-        let overrideProp = (element, prop) => {
-            Object.defineProperty(this, prop, {
-                get: () => element[prop],
-                set: (value) => element[prop] = value
+        let overrideProp = (obj, prop) => {
+            Object.defineProperty(element, prop, {
+                get: () => obj[prop],
+                set: (value) => obj[prop] = value
             });
         };
 
@@ -79,7 +104,7 @@ class TextDocument extends HTMLElement {
         let sortedIndexes = null;
         let highlights = [];
 
-        this.addHighlight = (start, end, color = '#FFFF00') => {
+        element.addHighlight = (start, end, color = '#FFFF00') => {
             if (isNaN(start) || isNaN(end))
                 throw "Invalid value. Must be a number";
 
@@ -87,7 +112,7 @@ class TextDocument extends HTMLElement {
             highlights.push({start: start, end: end, color: color});
         };
 
-        this.getHighlight = (start, end) => {
+        element.getHighlight = (start, end) => {
             const hasStart = !isNaN(start);
             const hasEnd = !isNaN(end);
             for (let i = 0; i < highlights.length; i++) {
@@ -105,9 +130,9 @@ class TextDocument extends HTMLElement {
             return null;
         };
 
-        this.removeHighlight = (obj) => {
+        element.removeHighlight = (obj) => {
             if (obj.hasOwnProperty('start') && obj.hasOwnProperty('end')) {
-                let highlight = this.getHighlight(obj.start, obj.end);
+                let highlight = element.getHighlight(obj.start, obj.end);
                 highlights.splice(highlight.index, 1);
                 sortedIndexes = null;
             }
@@ -148,21 +173,24 @@ class TextDocument extends HTMLElement {
                 let index = sortedIndexes[i];
                 let pair = index.pair;
                 if (isEndIndex(index)) {
-                    if (pair.index < length) {
+                    if (pair.index < length)
                         text = text.substring(0, index.index) + index.value + text.substring(index.index);
-                    }
                 }
                 else {
-                    if (index.index < length) {
+                    if (index.index < length)
                         text = text.substring(0, index.index) + index.value + text.substring(index.index);
-                    }
                 }
             }
             div.innerHTML = text;
         };
 
         textarea.addEventListener('input', () => applyHighlights());
+
+        return element;
     }
 }
 
-customElements.define('text-doc', TextDocument);
+if (window.customElements) {
+    window.customElements.define('text-doc', TextDocument);
+}
+
